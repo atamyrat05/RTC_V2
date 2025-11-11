@@ -22,15 +22,15 @@ func NewRoomPsqlRepository(logger *package_log.Logger, client package_psql.Clien
 	}
 }
 
-func (r *RoomPsqlRepository) CreateRoom(ctx context.Context, data models.SingleRoom) (string, error) {
-	var roomId string
+func (r *RoomPsqlRepository) CreateRoom(ctx context.Context, data models.SingleRoom) (int, error) {
+	var roomId int
 	args := pgx.NamedArgs{
 		"user1_id": data.User1_id,
 		"user2_id": data.User2_id,
 	}
 
 	q := `
-		SELECT uuid
+		SELECT id
 		FROM rooms
 		WHERE (user_1 = @user1_id AND user_2 = @user2_id)
    		OR (user_1 = @user2_id AND user_2 = @user1_id)
@@ -39,16 +39,16 @@ func (r *RoomPsqlRepository) CreateRoom(ctx context.Context, data models.SingleR
 	err := r.client.QueryRow(ctx, q, args).Scan(&roomId)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		r.logger.Errorln("error", err)
-		return "", err
+		return 0, err
 	}
 
-	if roomId == "" {
-		q = `INSERT INTO rooms (user_1, user_2) VALUES (@user1_id, @user2_id) RETURNING uuid`
+	if roomId == 0 {
+		q = `INSERT INTO rooms (user_1, user_2) VALUES (@user1_id, @user2_id) RETURNING id`
 
 		err = r.client.QueryRow(ctx, q, args).Scan(&roomId)
 		if err != nil {
 			r.logger.Errorln("error", err)
-			return "", err
+			return 0, err
 		}
 	}
 

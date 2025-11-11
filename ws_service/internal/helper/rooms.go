@@ -7,7 +7,7 @@ import (
 )
 
 func GetAllRooms(ctx context.Context, client package_psql.Client, hub *ws.Hub) error {
-	q := `SELECT uuid FROM rooms`
+	q := `SELECT id FROM rooms`
 
 	rows, err := client.Query(ctx, q)
 	if err != nil {
@@ -15,15 +15,15 @@ func GetAllRooms(ctx context.Context, client package_psql.Client, hub *ws.Hub) e
 	}
 
 	for rows.Next() {
-		var uuid string
+		var id int
 
-		err = rows.Scan(&uuid)
+		err = rows.Scan(&id)
 		if err != nil {
 			return err
 		}
 
-		hub.Rooms[uuid] = &ws.Room{
-			ID:      uuid,
+		hub.Rooms[id] = &ws.Room{
+			ID:      id,
 			Name:    "test",
 			Clients: make(map[string]*ws.Client),
 		}

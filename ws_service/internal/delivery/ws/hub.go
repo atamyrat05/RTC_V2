@@ -1,13 +1,13 @@
 package ws
 
 type Room struct {
-	ID      string             `json:"id"`
+	ID      int             `json:"id"`
 	Name    string             `json:"name"`
 	Clients map[string]*Client `json:"clients"`
 }
 
 type Hub struct {
-	Rooms      map[string]*Room
+	Rooms      map[int]*Room
 	Register   chan *Client
 	Unregister chan *Client
 	Broadcast  chan *Message
@@ -15,7 +15,7 @@ type Hub struct {
 
 func NewHub() *Hub {
 	return &Hub{
-		Rooms:      make(map[string]*Room),
+		Rooms:      make(map[int]*Room),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Broadcast:  make(chan *Message, 5),

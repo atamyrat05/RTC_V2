@@ -19,7 +19,7 @@ func NewRoomService(logger *package_log.Logger, repo storage.RoomRepository) *Ro
 	}
 }
 
-func (s *RoomService) CreateRoom(ctx context.Context, data models.SingleRoom) (string, error) {
+func (s *RoomService) CreateRoom(ctx context.Context, data models.SingleRoom) (int, error) {
 	return s.repo.CreateRoom(ctx, data)
 }
 

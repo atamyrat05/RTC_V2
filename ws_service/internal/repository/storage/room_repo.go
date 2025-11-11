@@ -6,7 +6,7 @@ import (
 )
 
 type RoomRepository interface {
-	CreateRoom(ctx context.Context, data models.SingleRoom) (string, error)
+	CreateRoom(ctx context.Context, data models.SingleRoom) (int, error)
 	GetAllRooms(ctx context.Context) ([]string, error)
 	SaveMessage(ctx context.Context, dto models.SaveChat) error
 }

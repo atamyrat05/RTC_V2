@@ -8,6 +8,7 @@ import (
 	"server/internal/service/repository"
 	"server/pkg/jwt"
 	package_log "server/pkg/logging"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -110,7 +111,7 @@ func (h *RoomHandler) JoinRoom(c *gin.Context) {
 		Conn:     conn,
 		Message:  make(chan *ws.Message, 10),
 		ID:       fromUserId,
-		RoomID:   "global",
+		RoomID:   1,
 		ToUserId: toUserID,
 		Service:  h.service,
 		Logger:   h.logger,
@@ -118,7 +119,7 @@ func (h *RoomHandler) JoinRoom(c *gin.Context) {
 
 	m := &ws.Message{
 		Content:    "A new user has joined the room",
-		RoomID:     "global",
+		RoomID:     1,
 		FromUserId: fromUserId,
 		ToUserId:   toUserID,
 	}
@@ -146,7 +147,7 @@ func (h *RoomHandler) GetRooms(c *gin.Context) {
 
 func (h *RoomHandler) GetClients(c *gin.Context) {
 	var clients []models.ClientRes
-	roomId := c.Param("roomId")
+	roomId, _ := strconv.Atoi(c.Param("roomId"))
 
 	if _, ok := h.hub.Rooms[roomId]; !ok {
 		clients = make([]models.ClientRes, 0)

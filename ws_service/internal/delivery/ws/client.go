@@ -16,7 +16,7 @@ type Client struct {
 	Conn     *websocket.Conn
 	Message  chan *Message
 	ID       string `json:"id"`
-	RoomID   string `json:"roomId"`
+	RoomID   int `json:"roomId"`
 	ToUserId string `json:"to_user_id"`
 	Logger   *package_log.Logger
 	Service  repository.RoomService
@@ -24,7 +24,7 @@ type Client struct {
 
 type Message struct {
 	Content    string `json:"content"`
-	RoomID     string `json:"roomId"`
+	RoomID     int `json:"roomId"`
 	FromUserId string `json:"from_user_id"`
 	ToUserId   string `json:"to_user_id"`
 }
@@ -41,7 +41,7 @@ func (c *Client) WriteMessage() {
 		}
 
 		if message.Content == "user left the chat" {
-			logrus.Printf("user left chat! roomId=%s, userId=%s", message.RoomID, message.FromUserId)
+			logrus.Printf("user left chat! roomId=%d, userId=%s", message.RoomID, message.FromUserId)
 		}
 
 		c.Conn.WriteJSON(message)

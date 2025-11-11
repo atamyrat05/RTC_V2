@@ -1,0 +1,23 @@
+is_debug: true
+listen:
+  type: port
+  port: :8081
+  bind_ip: 0.0.0.0
+storage:
+  psql:
+    host: 127.0.0.1
+    port: 5432
+    database: bb_chat
+    username: bb_chat
+    password: bb_chat
+    pg_pool_max_conn: 400
+    migration: true
+log:
+  path:   /home/atamyrat/Desktop/Real-time-Chat/logs
+  filename: real-time-chat.log
+file_path: /home/atamyrat/Desktop/Real-time-Chat/uploads
+auth:
+  jwt_verify: verify!autm25tm#a?aa
+  jwt_registration: registration!autm25tm#a?aa
+
+jwt_secret_key: Tm@2025!Jwt#

@@ -14,7 +14,7 @@ import (
 
 const (
 	baseURL = "/api/v1/"
-	roomURL = baseURL + "/room"
+	roomURL = baseURL
 )
 
 func Manager(logger *package_log.Logger, clientPsql package_psql.Client, cfg *configs.Config, hub *ws.Hub) *gin.Engine {

@@ -42,15 +42,6 @@ func main() {
 	defer psqlClient.Close()
 	logger.Info("psql client connected")
 
-	// Run db migrations
-	// if cfg.Storage.Psql.Migration {
-	// 	if err = migrations.RunMigrations(logger, psqlClient.StdDB()); err != nil {
-	// 		logger.Fatalf("Failed to apply migrations: %v", err)
-	// 	}
-	// } else {
-	// 	logger.Info("Migration flag is disabled; skipping migrations.")
-	// }
-
 	hub := ws.NewHub()
 	router := handler.Manager(logger, psqlClient, cfg, hub)
 

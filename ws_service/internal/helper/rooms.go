@@ -4,6 +4,8 @@ import (
 	"context"
 	"server/internal/delivery/ws"
 	package_psql "server/pkg/db"
+
+	"github.com/sirupsen/logrus"
 )
 
 func GetAllRooms(ctx context.Context, client package_psql.Client, hub *ws.Hub) error {
@@ -11,14 +13,17 @@ func GetAllRooms(ctx context.Context, client package_psql.Client, hub *ws.Hub) e
 
 	rows, err := client.Query(ctx, q)
 	if err != nil {
+		logrus.Println("error", err)
 		return err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var id int
 
 		err = rows.Scan(&id)
 		if err != nil {
+			logrus.Println("error", err)
 			return err
 		}
 

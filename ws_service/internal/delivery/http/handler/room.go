@@ -6,13 +6,11 @@ import (
 	"server/internal/helper"
 	"server/internal/models"
 	"server/internal/service/repository"
-	"server/pkg/jwt"
 	package_log "server/pkg/logging"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
 )
 
 type RoomHandler struct {
@@ -38,8 +36,6 @@ func (h *RoomHandler) RoomRegisterRoutes(r *gin.RouterGroup) {
 	}
 
 	r.GET("/join-ws", h.JoinRoom)
-	r.POST("/user/:id", h.keyp)
-
 }
 
 func (h *RoomHandler) GetAllRooms() error {
@@ -90,22 +86,14 @@ var upgrader = websocket.Upgrader{
 }
 
 func (h *RoomHandler) JoinRoom(c *gin.Context) {
-	token := c.Query("token")
-
-	fromUserId, err := jwt.ParseToken(token)
-	if err != nil {
-		h.logger.Errorln("error", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
-		return
-	}
+	fromUserId := c.Query("fromUserId")
+	toUserID := c.Query("userId")
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	toUserID := c.Query("userId")
 
 	cl := &ws.Client{
 		Conn:     conn,
@@ -125,7 +113,6 @@ func (h *RoomHandler) JoinRoom(c *gin.Context) {
 	}
 
 	h.hub.Register <- cl
-	logrus.Printf("new user connected! roomId=%s, userId=%s", "global", fromUserId)
 	h.hub.Broadcast <- m
 
 	go cl.WriteMessage()
@@ -162,19 +149,4 @@ func (h *RoomHandler) GetClients(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, clients)
-}
-
-func (h *RoomHandler) keyp(c *gin.Context) {
-	userId := c.Param("id")
-
-	token, err := jwt.GenerateToken(userId)
-	if err != nil {
-		h.logger.Errorln("error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-		return
-	}
-
-	c.JSON(http.StatusOK, map[string]interface{}{
-		"token": token,
-	})
 }

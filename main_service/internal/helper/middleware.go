@@ -2,7 +2,6 @@ package helper
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"server/pkg/jwt"
 	"strings"
@@ -38,7 +37,6 @@ func UserIdentity(c *gin.Context) {
 
 func IntId(c *gin.Context) (string, error) {
 	id, ok := c.Get(UserCtx)
-	fmt.Println("id", id)
 	if !ok {
 		newErrResponse(c, http.StatusInternalServerError, "user id not found!")
 		return "", errors.New("user id not found")

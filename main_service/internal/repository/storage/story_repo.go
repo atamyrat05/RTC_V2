@@ -10,6 +10,4 @@ type StoryRepository interface {
 	GetUserStory(ctx context.Context, id string) (models.Story, error)
 	GetAllStoryForUser(ctx context.Context, dto models.GetStoryDto) ([]models.Story, error)
 	GetStoryById(ctx context.Context, id string) ([]string, error)
-
-	//AddUser(ctx context.Context, data models.User) error
 }

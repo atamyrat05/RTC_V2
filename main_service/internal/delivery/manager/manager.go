@@ -42,7 +42,7 @@ func Manager(logger *package_log.Logger, clientPsql package_psql.Client, cfg *co
 		storyHandler.StoryRegisterRoutes(storyGroup)
 	}
 
-	chatGroup := r.Group(chatURL, helper.UserIdentity)
+	chatGroup := r.Group(chatURL)
 	{
 		chatRepo := repository.NewChatPsqlRepository(logger, clientPsql)
 		chatService := service.NewChatService(logger, chatRepo)

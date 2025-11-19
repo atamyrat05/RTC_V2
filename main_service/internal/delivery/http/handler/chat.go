@@ -1,12 +1,12 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"server/internal/helper"
 	"server/internal/models"
 	"server/internal/service/repository"
+	"server/pkg/jwt"
 	package_log "server/pkg/logging"
 	"strconv"
 	"time"
@@ -30,7 +30,6 @@ func NewChatHandler(logger *package_log.Logger, service repository.ChatService) 
 func (h *ChatHandler) ChatRegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/get-users-chat-history", h.GetUserChatHistroies)
 	r.GET("/get-user-chats/:partnerId", h.GetUserChatsWithPartner)
-	r.GET("/join-ws", h.joinWS)
 	r.GET("/join-ws-proxy", h.joinWSProxy)
 }
 
@@ -80,67 +79,6 @@ func (h *ChatHandler) GetUserChatsWithPartner(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-func (h *ChatHandler) joinWS(c *gin.Context) {
-	userId, err := helper.IntId(c)
-	if err != nil {
-		h.logger.Errorln("error getting user id:", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	// foydalanuvchi kim bilan chat qilmoqchi (partner ID)
-	toUserID := c.Query("partnerId")
-	if toUserID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "partnerId is required"})
-		return
-	}
-
-	// 2-serverdagi websocket manzili
-	wsURL := url.URL{
-		Scheme: "ws",
-		Host:   "localhost:8081",
-		Path:   "api/v1/join-ws",
-		RawQuery: url.Values{
-			"fromUserId": []string{userId},
-			"userId":     []string{toUserID},
-		}.Encode(),
-	}
-
-	// WebSocket ulanishini o‘rnatamiz
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL.String(), nil)
-	if err != nil {
-		h.logger.Errorln("error connecting to second WS server:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect ws"})
-		return
-	}
-
-	h.logger.Infof("✅ User %s connected to second WS server with %s", userId, wsURL.String())
-
-	// real vaqtda xabarlarni olish
-	go func() {
-		defer conn.Close()
-		for {
-			_, msg, err := conn.ReadMessage()
-			if err != nil {
-				h.logger.Errorln("error reading ws message:", err)
-				break
-			}
-			h.logger.Infof("📩 Message from 8081: %s", string(msg))
-		}
-	}()
-
-	// test uchun 8081 ga bitta salom yuboramiz
-	message := fmt.Sprintf("User %s joined chat with %s", userId, toUserID)
-	err = conn.WriteMessage(websocket.TextMessage, []byte(message))
-	if err != nil {
-		h.logger.Errorln("error sending message:", err)
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "WebSocket connection established with server 8081",
-	})
-}
-
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
@@ -154,13 +92,20 @@ func (h *ChatHandler) joinWSProxy(c *gin.Context) {
 		return
 	}
 
+	fromUserId, err := jwt.ParseToken(token)
+	if err != nil {
+		h.logger.Errorln("error", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err})
+		return
+	}
+
 	// --- 1. Frontend bilan WS o‘rnatamiz
 	clientConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		h.logger.Errorln("upgrade error:", err)
 		return
 	}
-	h.logger.Infoln("✅ Frontend connected to 8080 WebSocket")
+	//h.logger.Infoln("✅ Frontend connected to 8088 WebSocket")
 
 	// --- 2. 8081 dagi WS serverga ulanamiz
 	wsURL := url.URL{
@@ -168,8 +113,8 @@ func (h *ChatHandler) joinWSProxy(c *gin.Context) {
 		Host:   "localhost:8081",
 		Path:   "api/v1/join-ws",
 		RawQuery: url.Values{
-			"token":  []string{token},
-			"userId": []string{toUserID},
+			"userId":     []string{toUserID},
+			"fromUserId": []string{fromUserId},
 		}.Encode(),
 	}
 
@@ -180,7 +125,7 @@ func (h *ChatHandler) joinWSProxy(c *gin.Context) {
 		clientConn.Close()
 		return
 	}
-	h.logger.Infoln("🔗 Connected to 8081 WebSocket server")
+	//h.logger.Infoln("🔗 Connected to 8081 WebSocket server")
 
 	// --- 3. Forward xabarlarni front <-> 8081 o‘rtasida
 	go func() {
